@@ -35,13 +35,10 @@ pip install -r requirements.txt
     ```
 
 3.  **Set up your API Key:**
-
-    Open `virustotal.py` and replace `"your_api_key""` with your actual VirusTotal API key.
-
-    ```python
-    API_KEY = "YOUR_VIRUSTOTAL_API_KEY"
+    Enter your api key in .env file 
+    ```bash
+    mv .env.examples .env
     ```
-
 ## Usage
 
 1.  **Set the file path:**
