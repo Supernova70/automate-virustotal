@@ -84,6 +84,35 @@ class Virustotalscanner:
         except requests.RequestException as e:
             print(f"Error while checking analyses {e}")
             return None
+        
+    def get_report(self,analysis_id):
+        url=f"{self.base_url}/analyses/{analysis_id}"
+        try:
+            response=requests.get(url,headers=self.headers)
+            response.raise_for_status()
+            data=response.json()
+            status=data.get("data", {}).get("attributes", {}).get("status")
+            if status=="completed":
+                print("Analyses completed sucessfully ")
+                return data
+            elif status=="queued":
+                print("Analysis is still queued check after few time again ")
+            elif status=="running":
+                print("Analyses is still running please wait")
+            else:
+                print(f"Analysis status {status}")
+                return data
+        except requests.RequestException as e:
+            print(f"Error while getting report {e}")
+            return None
+
+
+    def get_report_file(self,file_hash):
+        pass
+        
+
+
+
 if __name__ == "__main__":
     API_KEY = os.getenv("API_KEY")  # enter your api key in .env file
     if not API_KEY:
@@ -100,3 +129,7 @@ if __name__ == "__main__":
             print(json.dumps(analysis_result, indent=4))
         else:
             print("Could not retrieve analysis ID from upload result.")
+
+
+    # test=scanner.get_report(analysis_id="OTlmYjE2M2NlMzVmNDg5YjJkYTgzZmZiZGYxOTY3MmM6MTc1MzExODIzNQ==")
+    # print(json.dumps(test, indent=4))
