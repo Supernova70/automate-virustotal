@@ -107,13 +107,72 @@ class Virustotalscanner:
             for chunk in iter(lambda: f.read(4096), b""):
                  sha256.update(chunk)
         return sha256.hexdigest()
+    
+
+
+    def pretty_print_report(self, report_json):
+        """ Prints a readable summary of the VirusTotal analysis report. """
+        if not report_json or "data" not in report_json:
+            print("No report data available.")
+            return
+
+        data = report_json["data"]
+        attributes = data.get("attributes", {})
+        stats = attributes.get("last_analysis_stats", {})
+        results = attributes.get("last_analysis_results", {})
+        file_info = {
+            "Name": attributes.get("meaningful_name", "N/A"),
+            "SHA256": attributes.get("sha256", "N/A"),
+            "MD5": attributes.get("md5", "N/A"),
+            "Type": attributes.get("type_description", "N/A"),
+            "Size": attributes.get("size", "N/A"),
+        }
+
+        print("\n=== File Information ===")
+        for k, v in file_info.items():
+            print(f"{k}: {v}")
+
+        print("\n=== Detection Stats ===")
+        for k, v in stats.items():
+            print(f"{k.capitalize()}: {v}")
+
+        print("\n=== Major Engine Results ===")
+        major_engines = ["Kaspersky", "BitDefender", "ESET-NOD32", "Microsoft", "McAfee", "Symantec", "Avast", "AVG"]
+        for engine in major_engines:
+            engine_result = results.get(engine)
+            if engine_result:
+                print(f"{engine}: {engine_result.get('category', 'N/A')} ({engine_result.get('result', 'Clean')})")
+            else:
+                print(f"{engine}: No result")
+
+        print("\n=== All Detections ===")
+        detected = {k: v for k, v in results.items() if v.get("category") == "malicious"}
+        if detected:
+            for engine, result in detected.items():
+                print(f"{engine}: {result.get('result', 'malicious')}")
+        else:
+            print("No malicious detections found.")
+
+        print("\n=== Scan Date ===")
+        scan_date = attributes.get("last_analysis_date", None)
+        if scan_date:
+            from datetime import datetime
+            try:
+                readable_date = datetime.fromtimestamp(int(scan_date)).strftime('%Y-%m-%d %H:%M:%S')
+                print(readable_date)
+            except Exception:
+                print(scan_date)
+        else:
+            print("N/A")
+
+
+
 
     def get_report_file(self,file_hash):
         """
         This will give the report based on hash of the file 
         """
         url=f"{self.base_url}/files/{file_hash}"
-
         try:
             response=requests.get(url,headers=self.headers)
             response.raise_for_status()
@@ -143,6 +202,7 @@ if __name__ == "__main__":
     hash_result=scanner.get_report_file(calculate_hash_of_file)
     if hash_result and hash_result.get("data",{}):
         print(f"This file is already in Virustotal Database")
+        scanner.pretty_print_report(hash_result)
         # here make such that it calls for another function report and then print that report
         # that function will just print the pretty output of the report not just a basic json but good
     else:
