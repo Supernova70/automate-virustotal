@@ -1,73 +1,102 @@
-# Automate VirusTotal
+# VirusTotal Automated Scanner
 
-This project provides a Python script to automate file scanning using the VirusTotal API. You can upload files to VirusTotal for analysis and get back the analysis ID.
+A Python tool to automate file scanning and reporting using the VirusTotal API.  
+It supports file uploads, hash-based lookups, status checks, and pretty-printed scan reports.
+
+---
 
 ## Features
 
-*   Upload files to VirusTotal for scanning.
-*   Handles both small and large files (files larger than 32MB are uploaded using a special URL).
-*   Error handling for common issues like HTTP errors, file not found, and other exceptions.
+- **Upload files** to VirusTotal for malware analysis (supports files >32MB).
+- **Check analysis status** and retrieve detailed scan reports.
+- **Hash-based lookup** (SHA256) to avoid re-uploading known files.
+- **Pretty-print scan results** for easy reading.
+- **Environment variable configuration** for API key and file path.
+- **Graceful error handling** for network and file issues.
+- **Interactive file path prompt** if the path is missing or invalid.
 
-## Requirements
+---
 
-*   Python 3.x
-*   `requests` library
-
-You can install the required library using pip:
-
-```bash
-pip install -r requirements.txt
-```
-
-## Installation
-
-1.  **Clone the repository:**
-
-    ```bash
-    git clone https://github.com/Supernova70/automate-virustotal.git
-    cd automate-virustotal
-    ```
-
-2.  **Install dependencies:**
-
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3.  **Set up your API Key:**
-    Enter your api key in .env file 
-    ```bash
-    mv .env.examples .env
-    ```
 ## Usage
 
-1.  **Set the file path:**
+1. **Install dependencies:**
+   ```bash
+   pip install requests python-dotenv
+   ```
 
-    In `virustotal.py`, update the `FILE_PATH` variable to the path of the file you want to scan.
+2. **Set up your `.env` file:**
+   ```
+   API_KEY=your_virustotal_api_key
+   FILE_PATH=/path/to/your/file.exe
+   ```
 
-    ```python
-    FILE_PATH = "/path/to/your/file.ext"
-    ```
+3. **Run the scanner:**
+   ```bash
+   python virustotal.py
+   ```
 
-2.  **Run the script:**
+   - If the file is already in VirusTotal, you'll get a pretty-printed report.
+   - If not, the file is uploaded and scanned, and you can check its status.
+   - If the file path is missing or invalid, you'll be prompted to enter a valid path.
 
-    ```bash
-    python virustotal.py
-    ```
+---
 
-    The script will upload the file and print the analysis ID.
+## Example Output
 
-## Future Features
+```
+API key loaded d841....de2d
+This file is already in Virustotal Database
 
-This section is reserved for upcoming features and enhancements.
+=== File Information ===
+Name: myfile.exe
+SHA256: ...
+MD5: ...
+Type: ...
+Size: ...
 
-*   **Todo Task Management:**
-    *   A feature to manage a list of tasks.
-*   **Get Analysis Report:**
-    *   Implement a function to retrieve the analysis report using the analysis ID.
-*   **Scan URLs:**
-    *   Add functionality to scan URLs in addition to files.
-*   **Configuration File:**
-    *   Move API key and other settings to a separate configuration file (e.g., `config.ini` or `.env`).
-*   **Command-line Arguments:**
-    *   Allow passing the file path and other options as command-line arguments.
+=== Detection Stats ===
+Malicious: 0
+Suspicious: 0
+Undetected: 65
+...
+
+=== Major Engine Results ===
+Kaspersky: undetected (Clean)
+BitDefender: undetected (Clean)
+...
+
+=== All Detections ===
+No malicious detections found.
+
+=== Scan Date ===
+2025-07-21 12:30:35
+```
+
+---
+
+## Project Structure
+
+- `virustotal.py` : Main scanner class and CLI logic.
+- `.env` : API key and file path configuration.
+
+---
+
+## TODO / Future Scope
+
+- [ ] Add a command-line interface (CLI) with `argparse` for flexible usage.
+- [ ] Support batch scanning of multiple files or folders.
+- [ ] Export scan reports to HTML, PDF, or Markdown.
+- [ ] Integrate notifications (Slack, Discord, email) for scan results.
+- [ ] Build a simple GUI (Tkinter, Flask, or Streamlit).
+- [ ] Add unit tests and set up CI/CD (GitHub Actions).
+- [ ] Dockerize the project for easy deployment.
+- [ ] Improve documentation and add usage screenshots.
+- [ ] Add threat intelligence enrichment (MITRE ATT&CK, etc.).
+- [ ] Create a statistics dashboard (top threats, engine reliability).
+- [ ] Handle API rate limits and quotas more robustly.
+- [ ] Mask API keys in logs and outputs for security.
+- [ ] Schedule automatic re-scans for files.
+- [ ] Support multiple API keys and automatic rotation.
+- [ ] Add advanced error handling and retry logic for uploads and queries.
+
+---
