@@ -24,10 +24,14 @@ class Virustotalscanner:
     def scan_url(self,scan_url):
         url=f"{self.base_url}/urls"
         payload = { "url": scan_url }
-        response=requests.post(url,data=payload,headers=self.headers)
-        response.raise_for_status()
-        result=response.json()
-        print(result)
+        try:
+            response=requests.post(url,data=payload,headers=self.headers)
+            response.raise_for_status()
+            result=response.json()
+            return result
+        except requests.RequestException as e:
+            print(f"Got some error {e}")
+            return None
 
 
     def upload_file(self,file_path):
@@ -194,38 +198,52 @@ class Virustotalscanner:
 
 
 if __name__ == "__main__":
-    API_KEY = os.getenv("API_KEY")  # enter your api key in .env file
+    API_KEY = os.getenv("API_KEY")
     if not API_KEY:
         print("Error : API_KEY not found in .env file check .env file")
+        exit(1)
+    print(f"API key loaded {API_KEY[:4]}....{API_KEY[-4:]}")
+    scanner = Virustotalscanner(API_KEY)
+
+    print("\nChoose a feature to test:")
+    print("1. Scan URL")
+    print("2. Scan File")
+    print("3. Get File Report by Hash")
+    choice = input("Enter choice (1/2/3): ").strip()
+
+    if choice == "1":
+        url = input("Enter URL to scan: ").strip()
+        result = scanner.scan_url(url)
+        print(json.dumps(result, indent=4))
+    elif choice == "2":
+        FILE_PATH = os.getenv("FILE_PATH")
+        if FILE_PATH:
+            FILE_PATH = FILE_PATH.strip('"').strip("'").strip()
+        while not FILE_PATH or not os.path.isfile(FILE_PATH):
+            print(f"Error: FILE_PATH '{FILE_PATH}' is not set or file does not exist.")
+            FILE_PATH = input("Please enter a valid file path to scan: ").strip('"').strip("'").strip()
+        calculate_hash_of_file = scanner.get_file_256(FILE_PATH)
+        hash_result = scanner.get_report_file(calculate_hash_of_file)
+        if hash_result and hash_result.get("data", {}):
+            print(f"This file is already in Virustotal Database")
+            scanner.pretty_print_report(hash_result)
+        else:
+            result = scanner.upload_file(FILE_PATH)
+            if result:
+                analysis_id = result.get("data", {}).get("id")
+                if analysis_id:
+                    analysis_result = scanner.analysis_status(analysis_id)
+                    analysis_status = analysis_result.get('data', {}).get('attributes', {}).get('status', {})
+                    print(f"Your status is {analysis_status}")
+            else:
+                print("Could not retrieve analysis ID from upload result.")
+    elif choice == "3":
+        file_path = input("Enter file path to get hash: ").strip()
+        file_hash = scanner.get_file_256(file_path)
+        result = scanner.get_report_file(file_hash)
+        print(json.dumps(result, indent=4))
     else:
-        print(f"API key loaded {API_KEY[:4]}....{API_KEY[-4:]}")
-        scanner = Virustotalscanner(API_KEY)
-    scanner.scan_url("https://docs.virustotal.com/")
-    FILE_PATH = os.getenv("FILE_PATH")  # Path to the file
-        # Remove any quotes from FILE_PATH
-    # if FILE_PATH:
-    #     FILE_PATH = FILE_PATH.strip('"').strip("'").strip()
-    #     # Check if file exists, else prompt user
-    # while not FILE_PATH or not os.path.isfile(FILE_PATH):
-    #     print(f"Error: FILE_PATH '{FILE_PATH}' is not set or file does not exist.")
-    #     FILE_PATH = input("Please enter a valid file path to scan: ").strip('"').strip("'").strip()
-    #calculate_hash_of_file=scanner.get_file_256(FILE_PATH)
-    #hash_result=scanner.get_report_file(calculate_hash_of_file)
-    # if hash_result and hash_result.get("data",{}):
-    #     print(f"This file is already in Virustotal Database")
-    #     scanner.pretty_print_report(hash_result)
-    #     # here make such that it calls for another function report and then print that report
-    #     # that function will just print the pretty output of the report not just a basic json but good
-    # else:
-    #     result = scanner.upload_file(FILE_PATH)
-    #     if result:
-    #         analysis_id = result.get("data", {}).get("id")
-    #         if analysis_id:
-    #             analysis_result = scanner.analysis_status(analysis_id)
-    #             analysis_status=analysis_result.get('data', {}).get('attributes',{}).get('status',{})
-    #             print(f"Your status is {analysis_status}")  
-    #     else:
-    #         print("Could not retrieve analysis ID from upload result.")
+        print("Invalid choice.")
 
 
     
