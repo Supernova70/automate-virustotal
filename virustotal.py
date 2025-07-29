@@ -3,6 +3,7 @@ import requests
 import os
 import hashlib
 from dotenv import load_dotenv
+import base64
 load_dotenv()
 # url = "https://www.virustotal.com/api/v3/files"
 # files = {}
@@ -20,6 +21,15 @@ class Virustotalscanner:
             "Accept": "application/json"
         }
     
+    def scan_url(self,scan_url):
+        url=f"{self.base_url}/urls"
+        payload = { "url": scan_url }
+        response=requests.post(url,data=payload,headers=self.headers)
+        response.raise_for_status()
+        result=response.json()
+        print(result)
+
+
     def upload_file(self,file_path):
         file_size= os.path.getsize(file_path)
         max_upload_size=32*1024*1024  # as we can directly upload only 32 mb 
@@ -190,31 +200,32 @@ if __name__ == "__main__":
     else:
         print(f"API key loaded {API_KEY[:4]}....{API_KEY[-4:]}")
         scanner = Virustotalscanner(API_KEY)
-        FILE_PATH = os.getenv("FILE_PATH")  # Path to the file
+    scanner.scan_url("https://docs.virustotal.com/")
+    FILE_PATH = os.getenv("FILE_PATH")  # Path to the file
         # Remove any quotes from FILE_PATH
-        if FILE_PATH:
-            FILE_PATH = FILE_PATH.strip('"').strip("'").strip()
-        # Check if file exists, else prompt user
-        while not FILE_PATH or not os.path.isfile(FILE_PATH):
-            print(f"Error: FILE_PATH '{FILE_PATH}' is not set or file does not exist.")
-            FILE_PATH = input("Please enter a valid file path to scan: ").strip('"').strip("'").strip()
-    calculate_hash_of_file=scanner.get_file_256(FILE_PATH)
-    hash_result=scanner.get_report_file(calculate_hash_of_file)
-    if hash_result and hash_result.get("data",{}):
-        print(f"This file is already in Virustotal Database")
-        scanner.pretty_print_report(hash_result)
-        # here make such that it calls for another function report and then print that report
-        # that function will just print the pretty output of the report not just a basic json but good
-    else:
-        result = scanner.upload_file(FILE_PATH)
-        if result:
-            analysis_id = result.get("data", {}).get("id")
-            if analysis_id:
-                analysis_result = scanner.analysis_status(analysis_id)
-                analysis_status=analysis_result.get('data', {}).get('attributes',{}).get('status',{})
-                print(f"Your status is {analysis_status}")  
-        else:
-            print("Could not retrieve analysis ID from upload result.")
+    # if FILE_PATH:
+    #     FILE_PATH = FILE_PATH.strip('"').strip("'").strip()
+    #     # Check if file exists, else prompt user
+    # while not FILE_PATH or not os.path.isfile(FILE_PATH):
+    #     print(f"Error: FILE_PATH '{FILE_PATH}' is not set or file does not exist.")
+    #     FILE_PATH = input("Please enter a valid file path to scan: ").strip('"').strip("'").strip()
+    #calculate_hash_of_file=scanner.get_file_256(FILE_PATH)
+    #hash_result=scanner.get_report_file(calculate_hash_of_file)
+    # if hash_result and hash_result.get("data",{}):
+    #     print(f"This file is already in Virustotal Database")
+    #     scanner.pretty_print_report(hash_result)
+    #     # here make such that it calls for another function report and then print that report
+    #     # that function will just print the pretty output of the report not just a basic json but good
+    # else:
+    #     result = scanner.upload_file(FILE_PATH)
+    #     if result:
+    #         analysis_id = result.get("data", {}).get("id")
+    #         if analysis_id:
+    #             analysis_result = scanner.analysis_status(analysis_id)
+    #             analysis_status=analysis_result.get('data', {}).get('attributes',{}).get('status',{})
+    #             print(f"Your status is {analysis_status}")  
+    #     else:
+    #         print("Could not retrieve analysis ID from upload result.")
 
 
     
