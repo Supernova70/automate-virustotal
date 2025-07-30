@@ -209,7 +209,8 @@ if __name__ == "__main__":
     print("1. Scan URL")
     print("2. Scan File")
     print("3. Get File Report by Hash")
-    choice = input("Enter choice (1/2/3): ").strip()
+    print("4. Get Report by Analysis ID")
+    choice = input("Enter choice (1/2/3/4): ").strip()
 
     if choice == "1":
         url = input("Enter URL to scan: ").strip()
@@ -242,6 +243,13 @@ if __name__ == "__main__":
         file_hash = scanner.get_file_256(file_path)
         result = scanner.get_report_file(file_hash)
         print(json.dumps(result, indent=4))
+    elif choice == "4":
+        analysis_id = input("Enter analysis ID: ").strip()
+        result = scanner.get_report(analysis_id)
+        if result:
+            scanner.pretty_print_report(result)
+        else:
+            print("Could not retrieve report for the given analysis ID.")
     else:
         print("Invalid choice.")
 
