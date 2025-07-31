@@ -87,7 +87,6 @@ No malicious detections found.
 - [ ] Support batch scanning of multiple files or folders.
 - [ ] Export scan reports to HTML, PDF, or Markdown.
 - [ ] Integrate notifications (Slack, Discord, email) for scan results.
-- [ ] Build a simple GUI (Tkinter, Flask, or Streamlit).
 - [ ] Add unit tests and set up CI/CD (GitHub Actions).
 - [ ] Dockerize the project for easy deployment.
 - [ ] Improve documentation and add usage screenshots.
