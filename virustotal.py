@@ -5,6 +5,8 @@ import hashlib
 from dotenv import load_dotenv
 import base64
 load_dotenv()
+import argparse
+from pathlib import Path
 # url = "https://www.virustotal.com/api/v3/files"
 # files = {}
 # headers = {
@@ -197,39 +199,51 @@ class Virustotalscanner:
 
 
 
+
 if __name__ == "__main__":
-    API_KEY = os.getenv("API_KEY")
-    if not API_KEY:
-        print("Error : API_KEY not found in .env file check .env file")
+    parser = argparse.ArgumentParser(description="VirusTotal CLI Scanner")
+    parser.add_argument('--apikey', type=str, default=os.getenv("API_KEY"), help='VirusTotal API key (or set API_KEY in .env)')
+    subparsers = parser.add_subparsers(dest='command', required=True, help='Sub-command to run')
+
+    # Scan URL
+    parser_url = subparsers.add_parser('scan-url', help='Scan a URL')
+    parser_url.add_argument('--url', type=str, required=True, help='URL to scan')
+
+    # Scan File
+    parser_file = subparsers.add_parser('scan-file', help='Scan a file')
+    parser_file.add_argument('--file', type=str, required=True, help='Path to file to scan')
+
+    # Get File Report by Hash
+    parser_hash = subparsers.add_parser('get-file-report', help='Get file report by hash')
+    parser_hash.add_argument('--file', type=str, required=True, help='Path to file to get hash and report')
+
+    # Get Report by Analysis ID
+    parser_analysis = subparsers.add_parser('get-analysis-report', help='Get report by analysis ID')
+    parser_analysis.add_argument('--id', type=str, required=True, help='Analysis ID')
+
+    args = parser.parse_args()
+
+    if not args.apikey:
+        print("Error: API key not provided. Use --apikey or set API_KEY in .env file.")
         exit(1)
-    print(f"API key loaded {API_KEY[:4]}....{API_KEY[-4:]}")
-    scanner = Virustotalscanner(API_KEY)
+    scanner = Virustotalscanner(args.apikey)
 
-    print("\nChoose a feature to test:")
-    print("1. Scan URL")
-    print("2. Scan File")
-    print("3. Get File Report by Hash")
-    print("4. Get Report by Analysis ID")
-    choice = input("Enter choice (1/2/3/4): ").strip()
-
-    if choice == "1":
-        url = input("Enter URL to scan: ").strip()
-        result = scanner.scan_url(url)
+    if args.command == 'scan-url':
+        result = scanner.scan_url(args.url)
         print(json.dumps(result, indent=4))
-    elif choice == "2":
-        FILE_PATH = os.getenv("FILE_PATH")
-        if FILE_PATH:
-            FILE_PATH = FILE_PATH.strip('"').strip("'").strip()
-        while not FILE_PATH or not os.path.isfile(FILE_PATH):
-            print(f"Error: FILE_PATH '{FILE_PATH}' is not set or file does not exist.")
-            FILE_PATH = input("Please enter a valid file path to scan: ").strip('"').strip("'").strip()
-        calculate_hash_of_file = scanner.get_file_256(FILE_PATH)
+
+    elif args.command == 'scan-file':
+        file_path = args.file
+        if not os.path.isfile(file_path):
+            print(f"Error: File '{file_path}' does not exist.")
+            exit(1)
+        calculate_hash_of_file = scanner.get_file_256(file_path)
         hash_result = scanner.get_report_file(calculate_hash_of_file)
         if hash_result and hash_result.get("data", {}):
-            print(f"This file is already in Virustotal Database")
+            print(f"This file is already in VirusTotal Database")
             scanner.pretty_print_report(hash_result)
         else:
-            result = scanner.upload_file(FILE_PATH)
+            result = scanner.upload_file(file_path)
             if result:
                 analysis_id = result.get("data", {}).get("id")
                 if analysis_id:
@@ -238,20 +252,23 @@ if __name__ == "__main__":
                     print(f"Your status is {analysis_status}")
             else:
                 print("Could not retrieve analysis ID from upload result.")
-    elif choice == "3":
-        file_path = input("Enter file path to get hash: ").strip()
+
+    elif args.command == 'get-file-report':
+        file_path = args.file
+        if not os.path.isfile(file_path):
+            print(f"Error: File '{file_path}' does not exist.")
+            exit(1)
         file_hash = scanner.get_file_256(file_path)
         result = scanner.get_report_file(file_hash)
         print(json.dumps(result, indent=4))
-    elif choice == "4":
-        analysis_id = input("Enter analysis ID: ").strip()
+
+    elif args.command == 'get-analysis-report':
+        analysis_id = args.id
         result = scanner.get_report(analysis_id)
         if result:
             scanner.pretty_print_report(result)
         else:
             print("Could not retrieve report for the given analysis ID.")
-    else:
-        print("Invalid choice.")
 
 
     
