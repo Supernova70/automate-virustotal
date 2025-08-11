@@ -1,3 +1,12 @@
+def send_webhook(webhook_url, payload):
+    """Send a JSON payload to a webhook URL via HTTP POST."""
+    try:
+        response = requests.post(webhook_url, json=payload, headers={"Content-Type": "application/json"})
+        response.raise_for_status()
+        print(f"Webhook sent successfully: {response.status_code}")
+    except requests.RequestException as e:
+        print(f"Failed to send webhook: {e}")
+
 import json 
 import requests
 import os
@@ -221,6 +230,12 @@ if __name__ == "__main__":
     parser_analysis = subparsers.add_parser('get-analysis-report', help='Get report by analysis ID')
     parser_analysis.add_argument('--id', type=str, required=True, help='Analysis ID')
 
+
+    # Webhook sender CLI
+    parser_webhook = subparsers.add_parser('send-webhook', help='Send scan result to a webhook URL')
+    parser_webhook.add_argument('--file', type=str, required=True, help='Path to file to scan and send result')
+    parser_webhook.add_argument('--webhook-url', type=str, required=False, default=os.getenv("WEBHOOK_URL"), help='Webhook URL to send the scan result (or set WEBHOOK_URL in .env)')
+
     args = parser.parse_args()
 
     if not args.apikey:
@@ -269,6 +284,26 @@ if __name__ == "__main__":
             scanner.pretty_print_report(result)
         else:
             print("Could not retrieve report for the given analysis ID.")
+
+    elif args.command == 'send-webhook':
+        file_path = args.file
+        webhook_url = args.webhook_url
+        if not webhook_url:
+            print("Error: Webhook URL not provided. Use --webhook-url or set WEBHOOK_URL in .env file.")
+            exit(1)
+        if not os.path.isfile(file_path):
+            print(f"Error: File '{file_path}' does not exist.")
+            exit(1)
+        file_hash = scanner.get_file_256(file_path)
+        result = scanner.get_report_file(file_hash)
+        if not result or not result.get("data", {}):
+            print("File not found in VirusTotal. Uploading and scanning...")
+            result = scanner.upload_file(file_path)
+            if not result:
+                print("Failed to upload and scan file.")
+                exit(1)
+        # Send the full report as JSON
+        send_webhook(webhook_url, result)
 
 
     
