@@ -16,6 +16,7 @@ import base64
 load_dotenv()
 import argparse
 from pathlib import Path
+from pdf_report_generator import VirusTotalPDFGenerator
 # url = "https://www.virustotal.com/api/v3/files"
 # files = {}
 # headers = {
@@ -206,6 +207,11 @@ class Virustotalscanner:
             print(f"Error while getting report by hash {e}")
             return None
 
+    def export_report_to_pdf(self, report_json, output_path):
+        """Export the VirusTotal report to a professional PDF file using the PDF generator module."""
+        pdf_generator = VirusTotalPDFGenerator()
+        return pdf_generator.generate_pdf_report(report_json, output_path)
+
 
 
 
@@ -235,6 +241,10 @@ if __name__ == "__main__":
     parser_webhook = subparsers.add_parser('send-webhook', help='Send scan result to a webhook URL')
     parser_webhook.add_argument('--file', type=str, required=True, help='Path to file to scan and send result')
     parser_webhook.add_argument('--webhook-url', type=str, required=False, default=os.getenv("WEBHOOK_URL"), help='Webhook URL to send the scan result (or set WEBHOOK_URL in .env)')
+    # Export report to PDF CLI
+    parser_pdf = subparsers.add_parser('export-pdf', help='Export file report to PDF')
+    parser_pdf.add_argument('--file', type=str, required=True, help='Path to file to get hash and report')
+    parser_pdf.add_argument('--output', type=str, required=False, default="virustotal_report.pdf", help='Output PDF file path')
 
     args = parser.parse_args()
 
@@ -304,6 +314,22 @@ if __name__ == "__main__":
                 exit(1)
         # Send the full report as JSON
         send_webhook(webhook_url, result)
+
+    elif args.command == 'export-pdf':
+        file_path = args.file
+        output_path = args.output
+        if not os.path.isfile(file_path):
+            print(f"Error: File '{file_path}' does not exist.")
+            exit(1)
+        file_hash = scanner.get_file_256(file_path)
+        result = scanner.get_report_file(file_hash)
+        if not result or not result.get("data", {}):
+            print("File not found in VirusTotal. Uploading and scanning...")
+            result = scanner.upload_file(file_path)
+            if not result:
+                print("Failed to upload and scan file.")
+                exit(1)
+        scanner.export_report_to_pdf(result, output_path)
 
 
     

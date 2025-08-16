@@ -39,6 +39,15 @@ It supports file uploads, hash-based lookups, status checks, and pretty-printed 
    - If not, the file is uploaded and scanned, and you can check its status.
    - If the file path is missing or invalid, you'll be prompted to enter a valid path.
 
+4. **Export professional PDF reports:**
+   ```bash
+   python virustotal.py export-pdf --file /path/to/your/file.exe --output security_report.pdf
+   ```
+
+   - Generates industry-grade PDF reports with professional styling
+   - Includes threat level assessment, detailed engine results, and visual indicators
+   - Color-coded detection statistics and comprehensive file metadata
+
 ---
 
 ## Example Output
@@ -85,7 +94,7 @@ No malicious detections found.
 
 - [ ] Add a command-line interface (CLI) with `argparse` for flexible usage.
 - [ ] Support batch scanning of multiple files or folders.
-- [ ] Export scan reports to HTML, PDF, or Markdown.
+- [ ] ~~Export scan reports to HTML, PDF, or Markdown.~~ ✅ **COMPLETED: Professional PDF export with industry-grade design**
 - [ ] Integrate notifications (Slack, Discord, email) for scan results.
 - [ ] Add unit tests and set up CI/CD (GitHub Actions).
 - [ ] Dockerize the project for easy deployment.
